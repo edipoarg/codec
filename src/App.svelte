@@ -138,7 +138,7 @@
     const column_names = rows[0];
 
     // for every row (skipping the first row of column names)
-    rows.slice(1, CONTENT_ANALYSIS_FIRST_COLUMN).forEach((row, r) => {
+    rows.slice(1).forEach((row, r) => {
       try {
         // separate rows related to content analysis
         const contentAnalysis = get_content_analysis_object(row, column_names, CONTENT_ANALYSIS_FIRST_COLUMN);
