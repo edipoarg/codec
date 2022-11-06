@@ -11,29 +11,56 @@
     events_store,
     ui_store,
     filter_toggles,
-    platform_config_store,
+    platform_config_store
   } from "./stores/store";
 
   // parameters
   const fetch_interval_ms = 30000;
 
   // variables
-  let mouse_xy = { x: 0, y: 0 };
-  let handleMouseMove = throttle((event) => {
+  const mouse_xy = { x: 0, y: 0 };
+  const handleMouseMove = throttle((event) => {
     mouse_xy.x = event.clientX;
     mouse_xy.y = event.clientY;
   }, 5);
 
+  const CONTENT_ANALYSIS_FIRST_COLUMN = 12;
+
   let width_mod_grid = Math.floor(document.body.clientWidth / 10) * 10;
   let height_mod_grid = Math.floor(document.body.clientHeight / 10) * 10;
 
-  let handleWindowResize = throttle(() => {
+  const handleWindowResize = throttle(() => {
     width_mod_grid = Math.floor(document.body.clientWidth / 10) * 10;
     height_mod_grid = Math.floor(document.body.clientHeight / 10) * 10;
   }, 500);
 
+  const string_to_boolean_or_value = v => v === "TRUE"
+    ? true
+    : v === "FALSE"
+    ? false
+    : v;
+
+  const get_content_analysis_object = (row, column_names, first_column) => column_names.slice(first_column)
+    .map((n, i) => ([n, row[first_column + i]]))
+    .reduce((a, [k, v]) => Object.assign(a, {
+      [k]: string_to_boolean_or_value(v)
+    }), { _column_names: column_names.slice(first_column) });
+
+  const content_analysis_to_row = (ca) => ca._column_names.map(n => ca[n]);
+
+  media_store.on("push", media => fetch(
+    `/.netlify/functions/googlesheets?request=updateRow` +
+      `&tab=${$platform_config_store["Title of tab with media assets"]}` +
+      `&row=${media.row}` +
+      `&offset=${CONTENT_ANALYSIS_FIRST_COLUMN}`, {
+      method: "POST",
+      body: JSON.stringify(content_analysis_to_row(
+        media.contentAnalysis))
+    }
+  ));
+
   onMount(() => {
-    let fetch_interval = setInterval(
+    const fetch_interval = setInterval(
       fetch_google_sheet_data,
       fetch_interval_ms
     );
@@ -42,24 +69,25 @@
     };
   });
 
-  function fetch_google_sheet_data() {
-    let assets_requests = [];
+  function fetch_google_sheet_data () {
+    const assets_requests = [];
     return fetch(
-      `/.netlify/functions/googlesheets?request=platformconfig&offset=1`
+      "/.netlify/functions/googlesheets?request=platformconfig&offset=1"
     )
       .then((rows_string) => rows_string.json())
       .then((platform_config) => {
         $platform_config_store = platform_config;
         fetch(
-          `/.netlify/functions/googlesheets?request=size_` +
+          "/.netlify/functions/googlesheets?request=size" +
+            "&tab=" +
             platform_config["Title of tab with media assets"] +
-            `&offset=` +
-            platform_config["Rank of assets row with column names"]
+            "&offset=" +
+            platform_config["Rank of assets row with column names"] - 2
         )
           .then((assets_info) => assets_info.json())
           .then((assets_info) => {
-            let n_necessary_requests = assets_info.total_size / 5500000.0; // max size is 6k, doing 5.5k for padding
-            let n_rows_per_requests = Math.floor(
+            const n_necessary_requests = assets_info.total_size / 5500000.0; // max size is 6k, doing 5.5k for padding
+            const n_rows_per_requests = Math.floor(
               assets_info.n_rows / n_necessary_requests
             );
 
@@ -67,15 +95,15 @@
             for (let r = 0; r < Math.floor(n_necessary_requests); r++) {
               assets_requests.push({
                 start: request_row_start,
-                end: request_row_start + n_rows_per_requests,
+                end: request_row_start + n_rows_per_requests
               });
               request_row_start += n_rows_per_requests + 1;
             }
-            let n_rows_last_request = assets_info.n_rows - request_row_start;
+            const n_rows_last_request = assets_info.n_rows - request_row_start;
 
             assets_requests.push({
               start: request_row_start,
-              end: request_row_start + n_rows_last_request,
+              end: request_row_start + n_rows_last_request
             });
 
             return assets_requests;
@@ -83,15 +111,16 @@
           .then((assets_requests) => {
             let media = [];
 
-            let request_range = (assets_request) =>
+            const request_range = (assets_request) =>
               fetch(
-                `/.netlify/functions/googlesheets?request=` +
+                "/.netlify/functions/googlesheets?request=tab" +
+                  "&tab=" +
                   platform_config["Title of tab with media assets"] +
-                  `&offset=` +
-                  platform_config["Rank of assets row with column names"] +
-                  `&rangeStart=` +
+                `&offset=${platform_config["Rank of assets row with column names"] - 2 }`
+                          +
+                  "&rangeStart=" +
                   assets_request.start +
-                  `&rangeEnd=` +
+                  "&rangeEnd=" +
                   assets_request.end
               );
 
@@ -112,10 +141,10 @@
           })
           .then(() => {
             fetch(
-              `/.netlify/functions/googlesheets?request=` +
+              "/.netlify/functions/googlesheets?request=tab" +
+                "&tab=" +
                 platform_config["Title of tab with events"] +
-                `&offset=` +
-                platform_config["Rank of events row with column names"]
+              `&offset=${platform_config["Rank of events row with column names" - 2]}`
             )
               .then((rows_string) => rows_string.json())
               .then((events) => {
@@ -125,17 +154,17 @@
       });
   }
 
-  function process_event_sheet_response(rows) {
+  function process_event_sheet_response (rows) {
     // first row of table is column names
-    let column_names = rows[0].map((col_name) => col_name.toLowerCase());
+    const column_names = rows[0].map((col_name) => col_name.toLowerCase());
 
     // create array to feed data as being processed
-    let events = [];
+    const events = [];
 
     // for every row (skipping the first row of column names)
     rows.slice(1).forEach((row, i) => {
       // create a video object
-      let event = {};
+      const event = {};
       // for each column in row
       row.forEach((col_value, i) => {
         // assign the new object the column value under the correct key
@@ -146,15 +175,15 @@
       event.start_date_time = localtoUTCdatetimeobj(
         new Date(event["datetime (yyyy-mm-dd hh:mm:ss)"])
       );
-      //create 10 second block for each event
+      // create 10 second block for each event
       event.end_date_time = new Date(event.start_date_time.getTime() + 10000);
       // event.className = "case" + event.case
       event.start = event.start_date_time;
       event.end = event.end_date_time;
 
-      var id = i + " event " + event.event;
+      const id = i + " event " + event.event;
       event.id = id;
-      event.description = event["event"];
+      event.description = event.event;
 
       // add video object to data array
       events.push(event);
@@ -164,48 +193,41 @@
     }
   }
 
-  function process_video_sheet_response(rows) {
+  function process_video_sheet_response (rows) {
     // first row of table is column names
-    let column_names = rows[0];
-    // create array to feed data as being processed
-    let new_videos = {};
+    const column_names = rows[0];
 
     // for every row (skipping the first row of column names)
     rows.slice(1).forEach((row, r) => {
       try {
+        // separate rows related to content analysis
+        const contentAnalysis = get_content_analysis_object(row, column_names, CONTENT_ANALYSIS_FIRST_COLUMN);
         // create a video object
-        let video = {};
+        const video = { contentAnalysis };
         // for each column in row
-        row.forEach((col_value, i) => {
+        for (const i in row) {
+          const col_value = string_to_boolean_or_value(row[i]);
           // assign the new object the column value under the correct key
 
-          // if the col value a string boolean
-          if (col_value == "TRUE" || col_value == "FALSE") {
-            // transform string boolean to actual boolean
-            video[column_names[i]] = col_value == "TRUE";
-            // if boolean not already in filter_toggles (only need to do once on first row)
-            // and checkig if already in there prevents from re-adding + resetting to false
-            // at every sheet fetch
-            if (
-              r == 0 &&
+          if (typeof (col_value) === "boolean" && (
+            r === 0 &&
               !Object.keys($filter_toggles).includes(column_names[i])
-            ) {
-              $filter_toggles[column_names[i]] = false;
-            }
+          )) {
+            $filter_toggles[column_names[i]] = false;
           } else {
             video[column_names[i]] = col_value;
           }
-        });
+        };
 
         // some UARs have _V at the end
-        if (video.UAR.slice(video.UAR.length - 2) == "_V") {
+        if (video.UAR.slice(video.UAR.length - 2) === "_V") {
           video.UAR = video.UAR.slice(0, video.UAR.length - 2);
         }
 
         // properties for map
         if (
           video[$platform_config_store["Title of column used for latitude"]] &&
-          video[$platform_config_store["Title of column used for longitude"]]
+            video[$platform_config_store["Title of column used for longitude"]]
         ) {
           video.lat = parseFloat(
             video[$platform_config_store["Title of column used for latitude"]]
@@ -219,6 +241,7 @@
         video.type = "range";
         video.label = video.UAR;
         video.id = video.UAR;
+        video.row = r + 2;
         video.url = $platform_config_store["Title of column used for url"];
 
         // date time string to datetime object
@@ -226,7 +249,7 @@
           video[
             $platform_config_store["Title of column used for chronolocation"]
           ] &&
-          video[$platform_config_store["Title of column used for duration"]]
+            video[$platform_config_store["Title of column used for duration"]]
         ) {
           try {
             video.duration =
@@ -242,7 +265,7 @@
                 ]
               )
             );
-            let [length_hours, length_minutes, length_seconds] =
+            const [length_hours, length_minutes, length_seconds] =
               video[
                 $platform_config_store["Title of column used for duration"]
               ].split(":");
@@ -254,8 +277,8 @@
             video.times = [
               {
                 starting_time: new Date(video.start).getTime(),
-                ending_time: new Date(video.end_date_time).getTime(),
-              },
+                ending_time: new Date(video.end_date_time).getTime()
+              }
             ];
 
             video.end = video.end_date_time;
@@ -265,21 +288,17 @@
           }
         }
 
-        new_videos[video.UAR] = video;
+        media_store.push(video, false);
       } catch (error) {
         console.log(error);
       }
     });
-
-    if (JSON.stringify($media_store) !== JSON.stringify(new_videos)) {
-      $media_store = new_videos;
-    }
   }
 
   // Takes datetime object created on local machine with time offset
-  // returns datetime object in UTC time when read by same local machine
-  function localtoUTCdatetimeobj(datetimeobj) {
-    let userTimezoneOffset = datetimeobj.getTimezoneOffset() * 60000;
+ // returns datetime object in UTC time when read by same local machine
+  function localtoUTCdatetimeobj (datetimeobj) {
+    const userTimezoneOffset = datetimeobj.getTimezoneOffset() * 60000;
     return new Date(datetimeobj.getTime() - userTimezoneOffset);
   }
 </script>
@@ -297,8 +316,8 @@
 <main
   on:mousemove={handleMouseMove}
   style="width:{width_mod_grid}px; height:{height_mod_grid}px; left:{$ui_store.filter_in_view
-    ? `var(--filtermenu-size)`
-    : `0`} "
+    ? "var(--filtermenu-size)"
+    : "0"} "
 >
   {#await fetch_google_sheet_data()}
     <div class="modal_container">
