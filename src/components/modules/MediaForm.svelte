@@ -2,6 +2,9 @@
   import {media_store} from '../../stores/store.js';
   export let medium;
   let expanded = false
+ // for some reason the store gets updated even when NOT USING the reactive store syntax…
+ let contentAnalysis = Object.assign({}, medium.contentAnalysis)
+ $: media_store.push({...medium, contentAnalysis})
 </script>
 
 <div class={`media-form-container ${expanded?"expanded":""}`}>
@@ -9,19 +12,19 @@
       <div class="module_title text_level1"><div class="arrow">«</div>Options</div>
     </div>
     <div class="media-form-content">
-        <form on:change={e => media_store.push(medium)}>
-        {#each Object.entries(medium.contentAnalysis) as [key, value]}
+        <form>
+            {#each Object.entries(contentAnalysis) as [key, value]}
             <div class="media-form-item">
                 {#if typeof value == "boolean"}
-                    <input name={key} type="checkbox" bind:checked={medium.contentAnalysis[key]}/>
+                    <input name={key} type="checkbox" bind:checked={contentAnalysis[key]}/>
                     <label class="label_text" for={key}>{key}</label>
             {:else if typeof(value) == "number"}
                     <label class="label_text" for={key}>{key}</label>
-                    <input name={key} type="number" bind:value={medium.contentAnalysis[key]}
+                    <input name={key} type="number" bind:value={contentAnalysis[key]}
                     />
                 {:else if key[0] !== '_'}
                     <h3 class="label_text" for={key}>{key}</h3>
-                    <textarea name={key} rows=3 bind:value={medium.contentAnalysis[key]}
+                    <textarea name={key} rows=3 bind:value={contentAnalysis[key]}
                           placeholder="describe what you see in the image in a short sentence" />
             {/if}
           </div>
