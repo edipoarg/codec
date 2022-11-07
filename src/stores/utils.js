@@ -4,7 +4,11 @@ import { writable } from "svelte/store";
 const object_equal = (a, b) => {
     if (!a || !b) return false;
     for (const key in a) {
-        if (a[key] !== b[key]) {
+        if (typeof a[key] === "object") {
+            if (!object_equal(a[key], b[key])) {
+                return false;
+            }
+        } else if (a[key] !== b[key]) {
             return false;
         }
     }
