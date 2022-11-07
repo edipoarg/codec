@@ -1,5 +1,5 @@
+import { writable, get } from "svelte/store";
 import EventEmitter from "events";
-import { writable } from "svelte/store";
 
 const object_equal = (a, b) => {
     if (!a || !b) return false;
@@ -20,17 +20,16 @@ export const makeStore = (t, idField = "UAR") => {
     const _s = writable(t);
     const { subscribe, set, update } = _s;
 
-    const push = (media, emit = true) => _s.update(prev => {
-        if (!prev) return { [media[idField]]: media };
-
-        if (object_equal(prev[media[idField]], media)) {
-            return;
-        }
+    const push = (media, emit = true) => {
+        const prev = get(_s);
+        if (!prev) return _s.set({ [media[idField]]: media });
+        if (object_equal(prev[media[idField]], media)) return;
 
         emit && _e.emit("push", media);
         prev[media[idField]] = media;
-        return prev;
-    });
+        return _s.set(prev)
+    };
+
     return {
         subscribe,
         set,
