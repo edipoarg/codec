@@ -7,11 +7,11 @@
  $: media_store.push({...medium, contentAnalysis})
 </script>
 
-<div class={`media-form-container ${expanded?"expanded":""}`}>
+<div class="media-form-container" class:expanded>
     <div class="module_topbar" on:click={() => {expanded = !!!expanded}}>
       <div class="module_title text_level1"><div class="arrow">«</div>Options</div>
     </div>
-    <div class="media-form-content">
+    <div class="media-form-conteant" class:expanded>
         <form>
             {#each Object.entries(contentAnalysis) as [key, value]}
             <div class="media-form-item">
