@@ -27,7 +27,7 @@ export const makeStore = (t, idField = "UAR") => {
 
         emit && _e.emit("push", media);
         prev[media[idField]] = media;
-        return _s.set(prev)
+        return _s.set(prev);
     };
 
     return {
