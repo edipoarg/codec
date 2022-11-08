@@ -25,6 +25,8 @@
     "netlify-cli": "^9.6.5",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
+    "rollup-plugin-hot": "^0.1.1",
+    "rollup-plugin-svelte-hot": "1.0.0-8",
     "rollup-plugin-terser": "^7.0.0",
     "svelte": "^3.0.0",
     "svelte-check": "^2.9.2",
@@ -38,8 +40,6 @@
     "google-spreadsheet": "^3.2.0",
     "mapbox-gl": "^2.7.0",
     "netlify-cli": "^12.0.7",
-    "rollup-plugin-hot": "^0.1.1",
-    "rollup-plugin-svelte-hot": "1.0.0-8",
     "sirv-cli": "^2.0.0",
     "underscore": "^1.13.2",
     "vis-timeline": "^7.5.0"
