@@ -3,7 +3,7 @@
   import Module from "./Module.svelte";
 </script>
 
-<div class="media">
+<div class="media" style="{$ui_store.media_in_view[0] ? 'height: 110%' : ''}">
   <!-- add (UAR) means it's a keyed each block, svelte tracks better -->
   {#each $ui_store.media_in_view as UAR (UAR)}
     <Module module={"media"} medium={$media_store[UAR]} />

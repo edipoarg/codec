@@ -8,10 +8,10 @@
 </script>
 
 <div class="media-form-container" class:expanded>
-    <div class="module_topbar" on:click={() => {expanded = !!!expanded}}>
-      <div class="module_title text_level1"><div class="arrow">«</div>Options</div>
+    <div class="module_topbar">
+      <div class="module_title text_level1" on:click={() => {expanded = !!!expanded}}><div class="arrow">«</div>Options</div>
     </div>
-    <div class="media-form-conteant" class:expanded>
+    <div class="media-form-content" class:expanded>
         <form>
             {#each Object.entries(contentAnalysis) as [key, value]}
             <div class="media-form-item">
@@ -25,7 +25,7 @@
                 {:else if key[0] !== '_'}
                     <h3 class="label_text" for={key}>{key}</h3>
                     <textarea name={key} rows=3 bind:value={contentAnalysis[key]}
-                          placeholder="describe what you see in the image in a short sentence" />
+                          placeholder="Describe what you see in the image in a short sentence" />
             {/if}
           </div>
         {/each}
@@ -41,14 +41,16 @@
    background-color: white;
    direction: rtl; /* ladies and gents: DA HACK */
    width: 20px;
-
+   height: 90px;
    overflow: visible;
    margin: 10px;
    border-radius: 7px;
    transition: all 200ms;
  }
  .media-form-container.expanded {
-     width: 20%;
+     width: fit-content;
+     height: unset;
+     padding: 0px 10px;
  }
  .media-form-content {
      width: 100%;
@@ -68,8 +70,10 @@
  .module_topbar .module_title {
      display: flex;
      font-size: 16px;
-     transform: translateX(30px) translateY(25px) rotate(90deg);
+     transform: translateX(35px) translateY(30px) rotate(90deg);
      transition: all 200ms;
+     cursor: pointer;
+     z-index: 200;
  }
 
  .expanded .module_topbar .module_title {
@@ -95,9 +99,11 @@
  }
 
  textarea {
-     margin-left: 20px;
-     height: 50px;
+     margin: 0px 20px;
+     height: 150px;
+     width: 300px;
      border: 1px solid;
+     border-radius: 7px;
  }
 
  textarea::placeholder {
