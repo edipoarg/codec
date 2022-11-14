@@ -31,14 +31,14 @@
 </script>
 
 <div class="medium" id={medium.id}>
-  <SvgOverlay classes={classes} selected={selected} annotations={annotations} src={src.replace(/\.[^.]+$/, ".txt")}>
+  <!-- <SvgOverlay classes={classes} selected={selected} annotations={annotations} src={src.replace(/\.[^.]+$/, ".txt")}> -->
   {#if src.includes("mp4") || src.includes("mov")}
       <video controls muted {src} type="video/mp4" style:height="100%"/>
   {:else if src.includes("png") || src.includes("jpeg") || src.includes("jpg")}
       <!-- svelte-ignore a11y-missing-attribute -->
       <img {src} style:height="100%"/>
     {/if}
-  </SvgOverlay>
+  <!-- </SvgOverlay> -->
 
   <MediaForm medium={medium}>
     {#if selected}
@@ -58,9 +58,11 @@
 .medium  {
    display: flex;
    width: auto;
-    height: 40vh;
+    height: 60vh;
     margin: 0 auto;
     overflow: hidden; /* Add this */
+    justify-content: center;
+    max-height: 100%;
   }
 
  .medium > * {
