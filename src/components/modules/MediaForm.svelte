@@ -25,7 +25,7 @@
                 {:else if key[0] !== '_'}
                     <h3 class="label_text" for={key}>{key}</h3>
                     <textarea name={key} rows=3 bind:value={contentAnalysis[key]}
-                          placeholder="describe what you see in the image in a short sentence" />
+                          placeholder="Describe what you see in the image in a short sentence" />
             {/if}
           </div>
         {/each}
