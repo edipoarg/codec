@@ -28,6 +28,12 @@
     height_mod_grid = Math.floor(document.body.clientHeight / 10) * 10;
   }, 500);
 
+  const string_to_boolean_or_value = v => v === "TRUE"
+    ? true
+    : v === "FALSE"
+    ? false
+    : v;
+
   onMount(() => {
     const fetch_interval = setInterval(fetch_google_sheet_data, 10000);
     return () => {
@@ -43,22 +49,17 @@
       .then((platform_config) => {
         $platform_config_store = platform_config;
         fetch(
-          `/.netlify/functions/googlesheets?sheet=` +
-            platform_config["Title of tab with media assets"] +
-            `&offset=` +
-            platform_config["Rank of assets row with column names"]
-        )
+          "/.netlify/functions/googlesheets?request=getData" +
+            `&sheet=${platform_config["Title of tab with media assets"]}` +
+            `&offset=${parseInt(platform_config["Rank of assets row with column names"])}`)
           .then((rows_string) => rows_string.json())
           .then((media) => {
             process_video_sheet_response(media);
           });
-
         fetch(
-          `/.netlify/functions/googlesheets?sheet=` +
-            platform_config["Title of tab with events"] +
-            `&offset=` +
-            platform_config["Rank of events row with column names"]
-        )
+          "/.netlify/functions/googlesheets?request=getData" +
+            `&sheet=${platform_config["Title of tab with events"]}` +
+            `&offset=${parseInt(platform_config["Rank of assets row with column names"])}`)
           .then((rows_string) => rows_string.json())
           .then((events) => {
             process_event_sheet_response(events);
@@ -117,26 +118,19 @@
         // create a video object
         const video = {};
         // for each column in row
-        row.forEach((col_value, i) => {
+        for (const i in row) {
+          const col_value = string_to_boolean_or_value(row[i]);
           // assign the new object the column value under the correct key
 
-          // if the col value a string boolean
-          if (col_value === "TRUE" || col_value === "FALSE") {
-            // transform string boolean to actual boolean
-            video[column_names[i]] = col_value === "TRUE";
-            // if boolean not already in filter_toggles (only need to do once on first row)
-            // and checkig if already in there prevents from re-adding + resetting to false
-            // at every sheet fetch
-            if (
-              r === 0 &&
-                !Object.keys($filter_toggles).includes(column_names[i])
-            ) {
-              $filter_toggles[column_names[i]] = false;
-            }
+          if (typeof (col_value) === "boolean" && (
+            r === 0 &&
+              !Object.keys($filter_toggles).includes(column_names[i])
+          )) {
+            $filter_toggles[column_names[i]] = false;
           } else {
             video[column_names[i]] = col_value;
           }
-        });
+        };
 
         // properties for map
         if (
@@ -234,7 +228,7 @@
   }
 
   // Takes datetime object created on local machine with time offset
-  // returns datetime object in UTC time when read by same local machine
+ // returns datetime object in UTC time when read by same local machine
   function localtoUTCdatetimeobj (datetimeobj) {
     const userTimezoneOffset = datetimeobj.getTimezoneOffset() * 60000;
     return new Date(datetimeobj.getTime() - userTimezoneOffset);
